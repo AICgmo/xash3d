@@ -20,6 +20,7 @@ GNU General Public License for more details.
 #endif
 #include "common.h"
 #include "mathlib.h"
+#include "mathlib_simd.h"
 
 #ifdef VECTORIZE_SINCOS
 
@@ -39,6 +40,7 @@ GNU General Public License for more details.
 #endif
 
 vec3_t	vec3_origin = { 0, 0, 0 };
+
 
 /*
 =================
@@ -257,6 +259,53 @@ void VectorVectors( const vec3_t forward, vec3_t right, vec3_t up )
 	CrossProduct( right, forward, up );
 }
 
+simd4f SIMD_VectorMA( simd4f a, float scale, simd4f b )
+{
+	// a + scale * b
+	simd4f vscale = SIMD_LoadFill4f( scale );
+	return SIMD_Add4f( a, SIMD_Mul4f( vscale, b ) );
+}
+
+float SIMD_DotProduct( simd4f x, simd4f y )
+{
+	const simd4f m = SIMD_Mul4f( x, y );
+
+	simd2f s1 = vpadd_f32( vget_low_f32( m ), vget_low_f32( m ) );
+	s1 = vadd_f32( s1, vget_high_f32( m ) );
+
+	return vget_lane_f32( s1, 0 );
+}
+
+
+simd4f SIMD_VectorNormalize( simd4f a )
+{
+	simd4f rs = SIMD_LoadFill4f( SIMD_DotProduct( a, a ) );
+	rs = SIMD_RSqrt4f( rs );
+
+	return SIMD_Mul4f( a, rs );
+}
+/*
+simd4f SIMD_CrossProduct( simd4f a, simd4f b )
+{
+	//c.x = a.y * b.z - a.z * b.y;
+	//c.y = a.z * b.x - a.x * b.z;
+	//c.z = a.x * b.y - a.y * b.x;
+
+	simd4f a_yzx, b_zxy, a_zxy, b_yzx;
+
+	a_yzx = SIMD_Combine2f( )
+}
+
+
+void SIMD_VectorVectors( const simd4f forward, simd4f *right, simd4f *up )
+{
+	float d;
+
+	*right = SIMD_Load3f( forward[2], -forward[0], forward[1] );
+	d = SIMD_DotProduct( forward, right );
+	*right = SIMD_VectorMA( *right, -d, *forward );
+}*/
+
 /*
 =================
 AngleVectors
@@ -408,11 +457,38 @@ BoundsIntersect
 */
 qboolean BoundsIntersect( const vec3_t mins1, const vec3_t maxs1, const vec3_t mins2, const vec3_t maxs2 )
 {
+#if defined(XASH_MATHLIB_SIMD)
+	simd4f vf1, vf2;
+	simd4u vu1;
+	uint32_t ret[4];
+	vf1 = SIMD_Load3fv( mins1 );
+	vf2 = SIMD_Load3fv( maxs2 );
+
+	vu1 = SIMD_Greater4f( vf1, vf2 );
+
+	SIMD_Store4uv( ret, vu1 );
+
+	if( ret[0] || ret[1] || ret[2] )
+		return false;
+
+	vf1 = SIMD_Load3fv( maxs1 );
+	vf2 = SIMD_Load3fv( mins2 );
+
+	vu1 = SIMD_Less4f( vf1, vf2 );
+
+	SIMD_Store4uv( ret, vu1 );
+
+	if( ret[0] || ret[1] || ret[2] )
+		return false;
+
+	return true;
+#else
 	if( mins1[0] > maxs2[0] || mins1[1] > maxs2[1] || mins1[2] > maxs2[2] )
 		return false;
 	if( maxs1[0] < mins2[0] || maxs1[1] < mins2[1] || maxs1[2] < mins2[2] )
 		return false;
 	return true;
+#endif
 }
 
 /*
@@ -422,11 +498,38 @@ BoundsAndSphereIntersect
 */
 qboolean BoundsAndSphereIntersect( const vec3_t mins, const vec3_t maxs, const vec3_t origin, float radius )
 {
+#if defined(XASH_MATHLIB_SIMD)
+	simd4f vf1, vf2;
+	simd4u vu1;
+	uint32_t ret[4];
+	vf1 = SIMD_Load3fv( mins );
+	vf2 = SIMD_Add4f( SIMD_Load3fv( origin ), SIMD_LoadFill4f( radius ) );
+
+	vu1 = SIMD_Greater4f( vf1, vf2 );
+
+	SIMD_Store4uv( ret, vu1 );
+
+	if( ret[0] || ret[1] || ret[2] )
+		return false;
+
+	vf1 = SIMD_Load3fv( maxs );
+	vf2 = SIMD_Sub4f( SIMD_Load3fv( origin ), SIMD_LoadFill4f( radius ) );
+
+	vu1 = SIMD_Less4f( vf1, vf2 );
+
+	SIMD_Store4uv( ret, vu1 );
+
+	if( ret[0] || ret[1] || ret[2] )
+		return false;
+
+	return true;
+#else
 	if( mins[0] > origin[0] + radius || mins[1] > origin[1] + radius || mins[2] > origin[2] + radius )
 		return false;
 	if( maxs[0] < origin[0] - radius || maxs[1] < origin[1] - radius || maxs[2] < origin[2] - radius )
 		return false;
 	return true;
+#endif
 }
 
 /*
@@ -453,12 +556,22 @@ RotatePointAroundVector
 */
 void RotatePointAroundVector( vec3_t dst, const vec3_t dir, const vec3_t point, float degrees )
 {
+#undef XASH_MATHLIB_SIMD
+#if defined(XASH_MATHLIB_SIMD)
+	simd4f t0, t1, vf, vr, vu;
+
+	SinCos( DEG2RAD( degrees ), &s, &c );
+	vf = SIMD_Load3fv( dir );
+	VectorVectors( vf, vr, vu );
+
+
+
+#else
 	float	t0, t1;
-	float	angle, c, s;
+	float	c, s;
 	vec3_t	vr, vu, vf;
 
-	angle = DEG2RAD( degrees );
-	SinCos( angle, &s, &c );
+	SinCos( DEG2RAD( degrees ), &s, &c );
 	VectorCopy( dir, vf );
 	VectorVectors( vf, vr, vu );
 
@@ -479,6 +592,7 @@ void RotatePointAroundVector( vec3_t dst, const vec3_t dir, const vec3_t point, 
 	dst[2] = (t0 * vr[0] + t1 * vu[0] + vf[2] * vf[0]) * point[0]
 	       + (t0 * vr[1] + t1 * vu[1] + vf[2] * vf[1]) * point[1]
 	       + (t0 * vr[2] + t1 * vu[2] + vf[2] * vf[2]) * point[2];
+#endif
 }
 
 //

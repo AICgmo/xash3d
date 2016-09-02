@@ -33,6 +33,14 @@ GNU General Public License for more details.
 #define ARCH_SUFFIX
 #endif
 
+#if defined(__clang__) || defined(__GNUC__)
+#define FORCEINLINE __attribute__((always_inline)) inline
+#elif defined(_MSC_VER)
+#define FORCEINLINE __forceinline
+#else
+#define FORCEINLINE inline // !!!
+#endif
+
 #if !defined(_WIN32)
 	#include <limits.h>
 	#include <dlfcn.h>

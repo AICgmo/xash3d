@@ -473,7 +473,7 @@ get_light:
 			r_pointColor[2] += ambientLight->b;
 
 			f = max( max( r_pointColor[0], r_pointColor[1] ), r_pointColor[2] );
-			if( f > 1.0f ) VectorScale( r_pointColor, ( 255.0f / f ), r_pointColor );
+			if( f > 1.0f ) _VectorScale( r_pointColor, ( 255.0f / f ), r_pointColor );
 
 			ambientLight->r = r_pointColor[0];
 			ambientLight->g = r_pointColor[1];

@@ -313,7 +313,8 @@ void VectorAngles( const float *forward, float *angles )
 
 	if( !forward || !angles )
 	{
-		if( angles ) VectorClear( angles );
+		if( angles )
+			VectorClear( angles );
 		return;
 	}
 

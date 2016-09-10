@@ -39,7 +39,7 @@ void Matrix3x4_VectorTransform( cmatrix3x4 in, const float v[3], float out[3] )
 
 void Matrix3x4_VectorITransform( cmatrix3x4 in, const float v[3], float out[3] )
 {
-	vec3_t	dir;
+	register vec3_t	dir;
 
 	dir[0] = v[0] - in[0][3];
 	dir[1] = v[1] - in[1][3];
@@ -208,8 +208,8 @@ void Matrix3x4_CreateFromEntity( matrix3x4 out, const vec3_t angles, const vec3_
 
 void Matrix3x4_TransformPositivePlane( cmatrix3x4 in, const vec3_t normal, float d, vec3_t out, float *dist )
 {
-	float	scale = sqrt( in[0][0] * in[0][0] + in[0][1] * in[0][1] + in[0][2] * in[0][2] );
-	float	iscale = 1.0f / scale;
+	register float	scale = sqrt( in[0][0] * in[0][0] + in[0][1] * in[0][1] + in[0][2] * in[0][2] );
+	register float	iscale = 1.0f / scale;
 
 	out[0] = (normal[0] * in[0][0] + normal[1] * in[0][1] + normal[2] * in[0][2]) * iscale;
 	out[1] = (normal[0] * in[1][0] + normal[1] * in[1][1] + normal[2] * in[1][2]) * iscale;
@@ -223,7 +223,7 @@ void Matrix3x4_Invert_Simple( matrix3x4 out, cmatrix3x4 in1 )
 	// (note the lack of sqrt here, because we're trying to undo the scaling,
 	// this means multiplying by the inverse scale twice - squaring it, which
 	// makes the sqrt a waste of time)
-	float	scale = 1.0f / (in1[0][0] * in1[0][0] + in1[0][1] * in1[0][1] + in1[0][2] * in1[0][2]);
+	register float	scale = 1.0f / (in1[0][0] * in1[0][0] + in1[0][1] * in1[0][1] + in1[0][2] * in1[0][2]);
 
 	// invert the rotation by transposing and multiplying by the squared
 	// recipricol of the input matrix scale as described above
@@ -267,7 +267,7 @@ void Matrix4x4_VectorTransform( cmatrix4x4 in, const float v[3], float out[3] )
 
 void Matrix4x4_VectorITransform( cmatrix4x4 in, const float v[3], float out[3] )
 {
-	vec3_t	dir;
+	register vec3_t	dir;
 
 	dir[0] = v[0] - in[0][3];
 	dir[1] = v[1] - in[1][3];
@@ -487,8 +487,8 @@ void Matrix4x4_TransformPositivePlane( cmatrix4x4 in, const vec3_t normal, float
 
 void Matrix4x4_TransformStandardPlane( cmatrix4x4 in, const vec3_t normal, float d, vec3_t out, float *dist )
 {
-	float scale = sqrt( in[0][0] * in[0][0] + in[0][1] * in[0][1] + in[0][2] * in[0][2] );
-	float iscale = 1.0f / scale;
+	register float scale = sqrt( in[0][0] * in[0][0] + in[0][1] * in[0][1] + in[0][2] * in[0][2] );
+	register float iscale = 1.0f / scale;
 
 	out[0] = (normal[0] * in[0][0] + normal[1] * in[0][1] + normal[2] * in[0][2]) * iscale;
 	out[1] = (normal[0] * in[1][0] + normal[1] * in[1][1] + normal[2] * in[1][2]) * iscale;
@@ -502,7 +502,7 @@ void Matrix4x4_Invert_Simple( matrix4x4 out, cmatrix4x4 in1 )
 	// (note the lack of sqrt here, because we're trying to undo the scaling,
 	// this means multiplying by the inverse scale twice - squaring it, which
 	// makes the sqrt a waste of time)
-	float	scale = 1.0f / (in1[0][0] * in1[0][0] + in1[0][1] * in1[0][1] + in1[0][2] * in1[0][2]);
+	register float	scale = 1.0f / (in1[0][0] * in1[0][0] + in1[0][1] * in1[0][1] + in1[0][2] * in1[0][2]);
 
 	// invert the rotation by transposing and multiplying by the squared
 	// recipricol of the input matrix scale as described above

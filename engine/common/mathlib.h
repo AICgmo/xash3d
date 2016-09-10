@@ -61,8 +61,7 @@ GNU General Public License for more details.
 #define IS_NAN(x)		(((*(int *)&x)&nanmask)==nanmask)
 
 
-#if (defined(__ARM_NEON__) || defined(__NEON__) || defined(__SSE__) || defined(_M_IX86_FP))
-#define XASH_USE_SIMD
+#if defined(XASH_USE_SIMD) && (defined(__ARM_NEON__) || defined(__NEON__) || defined(__SSE__) || defined(_M_IX86_FP))
 #define _VectorScale(in, scale, out) ((out)[0] = (in)[0] * (scale),(out)[1] = (in)[1] * (scale),(out)[2] = (in)[2] * (scale))
 
 #include "mathlib_simd.h"
